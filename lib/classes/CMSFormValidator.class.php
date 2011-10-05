@@ -46,7 +46,7 @@ class CMSFormValidator
 		if (call_user_func($this->params, $value) !== null)
 		{
 			global $gCms;
-			throw new Exception($gCms->modules['CMSForms']['object']->lang('field not unique', $value));
+			throw new Exception(cms_utils::get_module('CMSForms')->lang('field not unique', $value));
 		}
 		return true;
 	}
@@ -58,15 +58,15 @@ class CMSFormValidator
 		$value = $this->widget->getValue();
 		if (is_array($values) && count($values) == 0)
 		{
-			throw new Exception($gCms->modules['CMSForms']['object']->lang('field_cannot_be_empty', $this->widget->getFriendlyName()));
+			throw new Exception(cms_utils::get_module('CMSForms')->lang('field_cannot_be_empty', $this->widget->getFriendlyName()));
 		}
 		elseif(empty($values))
 		{
-			throw new Exception($gCms->modules['CMSForms']['object']->lang('field_cannot_be_empty', $this->widget->getFriendlyName()));
+			throw new Exception(cms_utils::get_module('CMSForms')->lang('field_cannot_be_empty', $this->widget->getFriendlyName()));
 		}
 		elseif(empty($value))
 		{
-			throw new Exception($gCms->modules['CMSForms']['object']->lang('field_cannot_be_empty', $this->widget->getFriendlyName()));
+			throw new Exception(cms_utils::get_module('CMSForms')->lang('field_cannot_be_empty', $this->widget->getFriendlyName()));
 		}
 		return true;
 	}
@@ -82,13 +82,13 @@ class CMSFormValidator
 			}
 			catch(Exception $e)
 			{
-				throw new Exception($gCms->modules['CMSForms']['object']->lang('unknown field', $this->params));
+				throw new Exception(cms_utils::get_module('CMSForms')->lang('unknown field', $this->params));
 				return false;
 			}
 			
 			if ($value1 != $value2)
 			{
-				throw new Exception($gCms->modules['CMSForms']['object']->lang('fields not equal', $this->widget->getFriendlyName(), $this->widget->getForm()->getWidget($this->params)->getFriendlyName()));
+				throw new Exception(cms_utils::get_module('CMSForms')->lang('fields not equal', $this->widget->getFriendlyName(), $this->widget->getForm()->getWidget($this->params)->getFriendlyName()));
 			}
 			
 			return true;
@@ -101,7 +101,7 @@ class CMSFormValidator
 		if (!self::validEmail($email))
 		{
 			global $gCms;
-			throw new Exception($gCms->modules['CMSForms']['object']->lang('invalid email', $email));
+			throw new Exception(cms_utils::get_module('CMSForms')->lang('invalid email', $email));
 		}
 		return true;
 	}

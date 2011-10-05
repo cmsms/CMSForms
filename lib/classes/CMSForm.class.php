@@ -9,7 +9,7 @@
 	
 	*/
 
-class CMSForm	extends	CmsObject
+class CMSForm	//extends	CmsObject
 {
 	
 	protected $module_name;
@@ -107,10 +107,9 @@ class CMSForm	extends	CmsObject
 	
 	public function getHeaders()
 	{
-		global $gCms;
-		if (isset($gCms->modules[$this->module_name]['object']))
+		if (cms_utils::get_module($this->module_name))
 		{			
-			$html = $gCms->modules[$this->module_name]['object']->CreateFormStart($this->id, $this->action, $this->returnid, $this->method, $this->enctype);
+			$html = cms_utils::get_module($this->module_name)->CreateFormStart($this->id, $this->action, $this->returnid, $this->method, $this->enctype);
 			foreach($this->hidden_widgets as $widget)
 			{
 				$html .= $widget->getInput();
@@ -122,10 +121,9 @@ class CMSForm	extends	CmsObject
 	
 	public function getFooters()
 	{
-		global $gCms;
-		if (isset($gCms->modules[$this->module_name]['object']))
+		if ((cms_utils::get_module($this->module_name)))
 		{			
-			$html = $gCms->modules[$this->module_name]['object']->CreateFormEnd();
+			$html = cms_utils::get_module($this->module_name)->CreateFormEnd();
 			return $html;
 		}
 		return null;
@@ -136,6 +134,13 @@ class CMSForm	extends	CmsObject
 		$this->labels[$label] = $title;
 	}
 	
+	public function setLabels($labels = array())
+	{
+		foreach($labels as $label => $title)
+		{
+			$this->setLabel($label, $title);
+		}
+	}	
 	
 	public function setButtons($buttons = array())
 	{
@@ -144,11 +149,11 @@ class CMSForm	extends	CmsObject
 	
 	public function getButtons()
 	{
-		global $gCms;
 		$html = '';
 		foreach($this->active_buttons as $button)
 		{
-			$html .= $gCms->modules[$this->module_name]['object']->CreateInputSubmit($this->id, $button, $this->labels[$button]);
+			// $html .= cms_utils::get_module($this->module_name)->CreateInputSubmit($this->id, $button, $this->labels[$button]);
+			$html .=  cms_utils::get_module($this->module_name)->CreateInputSubmit($this->id, $button, $this->labels[$button]);
 		}
 		
 		return $html;
@@ -203,12 +208,38 @@ class CMSForm	extends	CmsObject
 		}
 	}
 	
-	public function showWidgets($template=null)
+	public function hideWidget($name)
+	{
+		if (isset($this->widgets[$name]))
+		{
+			$this->widgets[$name]->hide();
+		}
+		elseif (isset($this->hidden_widgets[$name]))
+		{
+			$this->hidden_widgets[$name]->hide();
+		}
+	}
+	
+	public function removeWidget($name)
+	{
+		if (isset($this->widgets[$name]))
+		{
+			unset($this->widgets[$name]);
+		}
+		elseif (isset($this->hidden_widgets[$name]))
+		{
+			unset($this->hidden_widgets[$name]);
+		}
+	}
+	
+	
+	
+	public function showWidgets($template=null, $force=false)
 	{
 		$html = '';	
 		foreach($this->widgets as $widget)
 		{
-			$html .= $widget->show($template);
+			$html .= $widget->show($template, $force);
 		}
 		return $html;
 	}
@@ -347,16 +378,17 @@ class CMSForm	extends	CmsObject
 	
 	
 	
-	public function setFieldset($legend)
+	public function setFieldset($name, $legend='')
 	{
-		$this->fieldsets[$legend] = new CMSFormFieldset($this,$legend);
+		if(!isset($this->fieldsets[$name]))
+		$this->fieldsets[$name] = new CMSFormFieldset($this,$name,$legend);
 	}
 	
-	public function getFieldset($legend)
+	public function getFieldset($name)
 	{
-		if (isset($this->fieldsets[$legend]))
+		if (isset($this->fieldsets[$name]))
 		{
-			return $this->fieldsets[$legend];
+			return $this->fieldsets[$name];
 		}
 		return null;
 	}
@@ -371,26 +403,59 @@ class CMSForm	extends	CmsObject
 		return $html;
 	}
 	
+	public function renderFieldset($name, $widget_template = null)
+	{
+		if (isset($this->fieldsets[$name]))
+		{
+			return $this->fieldsets[$name]->render($widget_template);
+		}
+		return null;
+	}
+	
 }
 
 class CMSFormFieldset extends CMSForm
 {
 	protected $parent_form;
+	protected $name;
 	protected $legend;
+	protected $class;
+	protected $rendered = false;
 	
-	public function __construct($form, $legend)
+	public function __construct($form, $name, $legend = '')
 	{
 		parent::__construct($form->module_name, $form->id, $form->action, $form->returnid);
-		$this->legend = $legend;
+		$this->name = $name;
+		if($legend == '')
+		{
+			$this->legend = $name;
+		}
+		else
+		{
+			$this->legend = $legend;
+		}
 		$this->parent_form =& $form;
+	}
+	
+	public function setClass($class)
+	{
+		$this->class = $class;
 	}
 	
 	public function render($widget_template=null)
 	{
-		$html = '<fieldset><legend>'.$this->legend.'</legend>';
-		$html .= $this->showWidgets($widget_template);
-		$html .= '</fieldset>';
+		$html = '';
+		if(!$this->rendered)
+		{
+			$html .= '<fieldset';
+			$html .= ($this->class)?' class="' . $this->class . '"':'';
+			$html .='><legend>'.$this->legend.'</legend>';
+			$html .= $this->showWidgets($widget_template);
+			$html .= '</fieldset>';
+			$this->rendered = true;
+		}
 		return $html;
+		
 	}
 	
 	public function setWidget($name,$type,$settings = array())

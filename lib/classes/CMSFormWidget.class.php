@@ -9,7 +9,7 @@
 	
 	*/
 
-class CMSFormWidget	extends CmsObject
+class CMSFormWidget	//extends CmsObject
 {
 	// Settings
 	protected $id; // The form ID
@@ -26,6 +26,7 @@ class CMSFormWidget	extends CmsObject
 	protected $form;
 	
 	protected $is_valid = true;
+	protected $template = '%INPUT%';
 	
 	public static $fields = array(
 		'text' 			=> array('title' => 'Text field', 'ado' => 'C(255)'),
@@ -51,7 +52,19 @@ class CMSFormWidget	extends CmsObject
 	
 	// SETUP
 	
+	public function hide()
+	{
+		$this->type = 'hidden';
+		$this->settings['label'] = '';
+	}
+	
 	// FILL
+	
+	public function refresh()
+	{
+		// TODO: Check consequences
+		$this->init();
+	}
 	
 	protected function init()
 	{
@@ -100,9 +113,10 @@ class CMSFormWidget	extends CmsObject
 					{
 						$this->setValues($this->fetchValues());
 					}
-					elseif(isset($this->settings['preference']) && $gCms->modules[$this->module_name]['object']->getPreference($this->settings['preference']) != '')
+					elseif(isset($this->settings['preference']) && cms_utils::get_module($this->module_name)->getPreference($this->settings['preference']) != '')
 					{
-						$this->setValues($gCms->modules[$this->module_name]['object']->getPreference($this->settings['preference']));
+						$this->setValues(cms_utils::get_module($this->module_name)->getPreference($this->settings['preference']));
+						//$this->setValues(cms_utils::get_module($this->module_name)->getPreference($this->settings['preference']));
 					}
 
 					if(isset($this->settings['default_value']) && !$this->form->isPosted()) 
@@ -112,6 +126,7 @@ class CMSFormWidget	extends CmsObject
 							$this->setValues($this->settings['default_value']);
 						}
 					}
+					
 					break;
 			}
 		}
@@ -178,10 +193,10 @@ class CMSFormWidget	extends CmsObject
 	{
 		// TODO: REFACTORING
 		
-		if (!$this->showned || $force)
+		if ((!$this->showned || $force))
 		{
 			$html = '';
-			if (!is_null($template))
+			if (!is_null($template) && ($this->type != 'hidden'))
 			{
 				$text = str_replace('%LABEL%', $this->getLabel(), $template);
 				$text = str_replace('%INPUT%', $this->getInput(), $text);
@@ -222,9 +237,9 @@ class CMSFormWidget	extends CmsObject
 		}
 		// Try to get it from language file
 		global $gCms;
-		if (isset($gCms->modules[$this->module_name]['object']))
+		if (cms_utils::get_module($this->module_name))
 		{
-			return $gCms->modules[$this->module_name]['object']->lang('form_'.$this->name);
+			return cms_utils::get_module($this->module_name)->lang('form_'.$this->name);
 		}
 		return null;
 	}
@@ -242,10 +257,10 @@ class CMSFormWidget	extends CmsObject
 		}
 		// Try to get it from language file
 		global $gCms;
-		if (isset($gCms->modules[$this->module_name]['object']))
+		if (cms_utils::get_module($this->module_name))
 		{
 			// TODO: This should be shown only it the lang key exists...
-			//return $gCms->modules[$this->module_name]['object']->lang('tips_'.$this->name);
+			//return cms_utils::get_module($this->module_name)->lang('tips_'.$this->name);
 		}
 		return null;
 	}
@@ -258,35 +273,49 @@ class CMSFormWidget	extends CmsObject
 		}
 		
 		global $gCms;
-		if (isset($gCms->modules[$this->module_name]['object']))
+		if (cms_utils::get_module($this->module_name))
 		{
 			switch($this->type)
 			{
 				case 'text':
-					return $gCms->modules[$this->module_name]['object']->CreateInputText($this->id, $this->name, $this->getValue(), isset($this->settings['size'])?$this->settings['size']:80);				
+					return cms_utils::get_module($this->module_name)->CreateInputText($this->id, $this->name, $this->getValue(), isset($this->settings['size'])?$this->settings['size']:80);				
 				case 'hidden':
-					return $gCms->modules[$this->module_name]['object']->CreateInputHidden($this->id, $this->name, $this->getValue());
+					return cms_utils::get_module($this->module_name)->CreateInputHidden($this->id, $this->name, $this->getValue());
 				case 'select':
 					return self::CreateSelector($this->id, $this->name, $this->getValues(), $this->settings);
 				case 'checkbox':
-					return $gCms->modules[$this->module_name]['object']->CreateInputCheckbox($this->id, $this->name, '1', (integer)$this->getValue());
+					return cms_utils::get_module($this->module_name)->CreateInputCheckbox($this->id, $this->name, '1', (integer)$this->getValue());
 				case 'textarea':
 					if (isset($this->settings['show_wysiwyg']) && $this->settings['show_wysiwyg'] == true)
 					{
-						return $gCms->modules[$this->module_name]['object']->CreateTextArea(true, $this->id, $this->getValue(), $this->name);						
+						return cms_utils::get_module($this->module_name)->CreateTextArea(true, $this->id, $this->getValue(), $this->name);						
 					}
 					else
 					{
-						return $gCms->modules[$this->module_name]['object']->CreateTextArea(false, $this->id, $this->getValue(), $this->name);
+						return cms_utils::get_module($this->module_name)->CreateTextArea(
+							false,
+							$this->id,
+							$this->getValue(), 
+							$this->name,
+							isset($this->settings['classname'])?$this->settings['classname']:'',
+							isset($this->settings['htmlid'])?$this->settings['htmlid']:'',
+							isset($this->settings['encoding'])?$this->settings['encoding']:'',
+							isset($this->settings['stylesheet'])?$this->settings['stylesheet']:'',
+							isset($this->settings['cols'])?$this->settings['cols']:'80',
+							isset($this->settings['rows'])?$this->settings['rows']:'15',						
+							isset($this->settings['forcewysiwyg'])?$this->settings['forcewysiwyg']:'',					
+							isset($this->settings['wantedsyntax'])?$this->settings['wantedsyntax']:'',						
+							isset($this->settings['addtext'])?$this->settings['addtext']:''		
+							);
 					}
 				case 'codearea':
-					return $gCms->modules[$this->module_name]['object']->CreateTextArea(true, $this->id, $this->getValue(), $this->name,'pagebigtextarea', '','', '', 90, 15, 'EditArea');
+					return cms_utils::get_module($this->module_name)->CreateSyntaxArea($this->id, $this->getValue(), $this->name,'pagebigtextarea', '','', '', 90, 15);
 				case 'time':
 					return self::CreateTimeSelect($this->id,$this->name,$this->getValues());
 				case 'date':
 					return self::CreateDateSelect($this->id,$this->name,$this->getValues(), $this->settings);
 				case 'pages':
-					$this->settings['values'] = array(0 => '&laquo; ' . $gCms->modules['CMSForms']['object']->lang('select one') . ' &raquo;') + self::getPagesList($this->id, $this->name,$this->getValue(), $this->settings);;
+					$this->settings['values'] = array(0 => '&laquo; ' . cms_utils::get_module('CMSForms')->lang('select one') . ' &raquo;') + self::getPagesList($this->id, $this->name,$this->getValue(), $this->settings);;
 					return self::CreateSelector($this->id, $this->name, $this->getValues(), $this->settings);
 
 				case 'static':
@@ -294,7 +323,7 @@ class CMSFormWidget	extends CmsObject
 				case 'file':
 					return $this->getUploadField();
 				case 'password':
-					return $gCms->modules[$this->module_name]['object']->CreateInputPassword($this->id, $this->name, $this->getValue()
+					return cms_utils::get_module($this->module_name)->CreateInputPassword($this->id, $this->name, $this->getValue()
 					,isset($this->settings['size'])?$this->settings['size']:20);
 				default:
 					return null;
@@ -456,7 +485,7 @@ class CMSFormWidget	extends CmsObject
 		{
 			// Check if there is no cancel button first because we save the value directly !
 			global $gCms;
-			$gCms->modules[$this->module_name]['object']->setPreference($this->settings['preference'], $this->getValue());
+			cms_utils::get_module($this->module_name)->setPreference($this->settings['preference'], $this->getValue());
 		}
 	}
 	
@@ -584,9 +613,9 @@ class CMSFormWidget	extends CmsObject
 	public function getUploadField()
 	{
 		global $gCms;
-		$field = $gCms->modules[$this->module_name]['object']->CreateInputFile($this->id, $this->name, '', isset($this->settings['size'])?$this->settings['size']:30);
+		$field = cms_utils::get_module($this->module_name)->CreateInputFile($this->id, $this->name, '', isset($this->settings['size'])?$this->settings['size']:30);
 		$html = '<span>';
-		if (count($this->values))
+		if (!$this->isEmpty())
 		{
 			$file_url = isset($this->settings['base_url'])?$this->settings['base_url']:'';
 			if ((substr($file_url, -1) != '/') && (substr($this->getValue(),0,1) != '/')) $file_url .'/';
@@ -602,12 +631,14 @@ class CMSFormWidget	extends CmsObject
 			}
 			
 			$html .= '<span style="display:block; margin-bottom: 7px;"><a href="'.$file_url. '" rel="external" >'. $text .'</a></span> ';
+			
+			if (isset($this->settings['delete_checkbox']))
+			{
+				$field .= ' ' .  cms_utils::get_module($this->module_name)->CreateInputCheckbox($this->id, $this->settings['delete_checkbox'], '1') . ' ' .  cms_utils::get_module($this->module_name)->lang('delete');
+			}
 		}
 		
-		if (isset($this->settings['delete_checkbox']))
-		{
-			$field .= ' ' .  $gCms->modules[$this->module_name]['object']->CreateInputCheckbox($this->id, $this->settings['delete_checkbox'], '1') . ' ' .  $gCms->modules[$this->module_name]['object']->lang('delete');
-		}
+	
 		
 		$html .= $field . '</span>';
 		return $html;
@@ -775,7 +806,7 @@ class CMSFormWidget	extends CmsObject
 			$name .= '[]';
 		}
 	
-		$text = '<select name="'.$id.$name.'"';
+		$text = '<select name="'.$id.$name.'" id="'.$id.$name.'"';
 		if ($addttext != '')
 		{
 			$text .= ' ' . $addttext;
@@ -856,13 +887,13 @@ class CMSFormWidget	extends CmsObject
 	
 				foreach($item as $key2 => $entry)
 				{
-					 self::generateExpandedList(&$list, $id, $entry, $name, $key2, $selecteditems, $multiple, $addttext);
+					 self::generateExpandedList($list, $id, $entry, $name, $key2, $selecteditems, $multiple, $addttext);
 				}
 				
 			}
 			else
 			{
-				self::generateExpandedList(&$list, $id, $item, $name, $key, $selecteditems, $multiple, $addttext);
+				self::generateExpandedList($list, $id, $item, $name, $key, $selecteditems, $multiple, $addttext);
 			}
 		}
 		
@@ -892,7 +923,7 @@ class CMSFormWidget	extends CmsObject
 	
 	}
 	
-	protected static function generateExpandedList($list, $id, $item, $name, $key, $selecteditems, $multiple, $addttext)
+	protected static function generateExpandedList(&$list, $id, $item, $name, $key, $selecteditems, $multiple, $addttext)
 	{
 		if (in_array($key, $selecteditems))
 		{
