@@ -12,9 +12,9 @@ require_once dirname(__FILE__) . '/lib/classes/CMSFormValidator.class.php';
 
 class CMSForms extends CMSModule
 {
-	public function GetName()				{ return 'CMSForms';	    }
-	public function GetVersion()           	{ return '0.0.24';          }
-	public function GetAuthor()            	{ return 'Jean-Christophe Cuvelier'; }
-	public function GetAuthorEmail()       	{ return 'cybertotophe@gmail.com'; }
+	public function GetName()               { return 'CMSForms';	               }
+	public function GetVersion()            { return '0.1.2';                    }
+	public function GetAuthor()             { return 'Jean-Christophe Cuvelier'; }
+	public function GetAuthorEmail()        { return 'cybertotophe@gmail.com';   }
     /* Comment from Cloud9 IDE */
 }

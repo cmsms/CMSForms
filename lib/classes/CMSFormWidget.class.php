@@ -48,6 +48,8 @@ class CMSFormWidget	//extends CmsObject
 		$this->type = $type;
 		$this->settings = $settings;
 		$this->init();
+		
+		return $this;
 	}
 	
 	// SETUP
@@ -219,6 +221,10 @@ class CMSFormWidget	//extends CmsObject
 		return $this->name;
 	}
 	
+	public function getSetting($setting, $default_value = null)
+	{
+	  return isset($this->settings[$setting])?$this->settings[$setting]:$default_value;
+	}
 	public function getForm()
 	{
 		if(!is_object($this->form))
@@ -288,7 +294,7 @@ class CMSFormWidget	//extends CmsObject
 				case 'textarea':
 					if (isset($this->settings['show_wysiwyg']) && $this->settings['show_wysiwyg'] == true)
 					{
-						return cms_utils::get_module($this->module_name)->CreateTextArea(true, $this->id, $this->getValue(), $this->name);						
+						return cms_utils::get_module($this->module_name)->CreateTextArea(true, $this->id, $this->getValue(), $this->name, $this->getSetting('class'), $this->getSetting('htmlid'));						
 					}
 					else
 					{
@@ -379,6 +385,11 @@ class CMSFormWidget	//extends CmsObject
 			return false;
 		}
 		return true;
+	}
+	
+	public function setValidator($validator, $params = array())
+	{
+	  return $this->addValidator($validator, $params);
 	}
 	
 	public function addValidator($validator, $params = array())
@@ -516,6 +527,14 @@ class CMSFormWidget	//extends CmsObject
 	{
 		$this->values[$key] = (string)$value;
 	}
+
+  public function removeValueIfEqual($value)
+  {
+    if($this->getValue() == $value)
+    {
+      $this->setValues(array());
+    }
+  }
 	
 	public function getValues()
 	{
