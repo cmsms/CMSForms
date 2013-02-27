@@ -29,21 +29,18 @@ class CMSFormWidget  //extends CmsObject
     
     $this->widget = $this->getWidgetObject($type)
                          ->setup($id, $name, $form, $module_name, $settings)
-                         ->init();    
-    
-    
-    
-    
+                         ->init();
+    // var_dump($this->widget);
     // DEPRECATED
-    $this->form = $form;
-    $this->id = $id;
-    $this->module_name = $module_name;
-    $this->name = isset($settings['name'])?$settings['name']:$name;
-    $this->type = $type;
-    $this->settings = $settings;
-    //  --
-    
-    $this->init();
+    // $this->form = $form;
+    // $this->id = $id;
+    // $this->module_name = $module_name;
+    // $this->name = isset($settings['name'])?$settings['name']:$name;
+    // $this->type = $type;
+    // $this->settings = $settings;
+    // //  --
+    // 
+    // $this->init();
     
     return $this;
   }
@@ -58,14 +55,34 @@ class CMSFormWidget  //extends CmsObject
         return new CMSFormInputHidden();      
       case 'select':
         return new CMSFormInputSelect();      
+      case 'pages':
+        return new CMSFormInputPages();      
+      case 'countries':
+        return new CMSFormInputCountries();      
+      case 'textarea':
+        return new CMSFormInputTextarea();      
+      case 'codearea':
+        return new CMSFormInputSyntaxarea();      
       case 'date':
         return new CMSFormInputDate();
       case 'time':
         return new CMSFormInputTime();
       case 'checkbox':
-        return new CMSFormInputcheckbox();
+        return new CMSFormInputCheckbox();
+      case 'password':
+        return new CMSFormInputPassword();
+      case 'file':
+        return new CMSFormInputFile();
+      case 'static':
+        return new CMSFormInput();
       default:
-        return new CMSFormInput(); // Useless but it do not break the script
+        $class = 'CMSFormInput' . $type;
+        if(class_exists($class))
+        return new $class();
+        $class = 'CMSFormInput' . ucfirst($type);
+        if(class_exists($class))
+        return new $class();
+        return new CMSFormInput();
     }
   }
   
@@ -108,18 +125,25 @@ class CMSFormWidget  //extends CmsObject
 
   
   // SETUP
-  
   public function hide()  {
-    $this->type = 'hidden';
-    $this->settings['label'] = '';
+    
+    $this->getWidget()->setSetting('label','');
+    
+    $widget = new CMSFormInputHidden();
+    $widget->setup(
+            $this->getWidget()->id,
+            $this->getWidget()->name,
+            $this->getWidget()->form,
+            $this->getWidget()->module_name,
+            $this->getWidget()->settings
+          )
+          ->init()
+          ->setValues($this->getWidget()->getValues());
+    $this->widget = $widget;
   }
-  
+
   // FILL
-  
-  public function refresh() {
-    // TODO: Check consequences
-    $this->init();
-  }
+
   
   /* CHECK GTD  */
   protected function init() {
@@ -217,195 +241,65 @@ class CMSFormWidget  //extends CmsObject
       }
   }
   
-  // RENDER
+  // LINKED TO WIDGETS  
   
-  public function __toString()  {
-    // TODO: REFACTORING
-    if ($this->type == 'hidden')
-    {
-      return $this->getInput();
-    }
-    else
-    {
-      $html = '
-      <div class="form_widget">
-        <div class="form_label"><label for="'.$this->id.$this->name.'">'.$this->getLabel().'</label></div>';            
-      if (count($this->form_errors))
-      {
-        $html .= '<div class="form_errors">' . $this->showErrors() . '</div>';
-      }        
-      $html .= '
-        <div class="form_input">'.$this->getInput().'</div>
-      </div>';
-      return $html;
-    }
-  }
+
   
   public function show($template = null, $force = false)  {
-    // TODO: REFACTORING
-    
-    if ((!$this->showned || $force))
-    {
-      $html = '';
-      if(isset($this->settings['with_div']))
-      {
-        $class = isset($this->settings['class'])?' class="'.$this->settings['class'].'"':' class="field_'.$this->name.'"';
-        $html .= '<div'.$class.'>';
-      }
-      if (!is_null($template) && ($this->type != 'hidden'))
-      {
-        $text = str_replace('%FIELDNAME%', $this->name, $template);
-        $text = str_replace('%LABEL%', $this->getLabel(), $text);
-        $text = str_replace('%LABEL_TAG%', $this->getLabelTag(), $text);
-        $text = str_replace('%INPUT%', $this->getInput(), $text);
-        $text = str_replace('%ERRORS%', $this->showErrors(), $text);
-        $text = str_replace('%TIPS%', $this->getTips(), $text);
-        $html .= $text;
-      }
-      else
-      {
-        $html .= $this;        
-      }    
-      if(isset($this->settings['with_div']))
-      {
-        $html .= '</div>';
-      }
-      $this->showned = true;
-      return $html;
-    }
-    return null;
+   return $this->getWidget()->show($template,$force);
   }
   
-  public function getName()  {
-    return $this->name;
+  public function __toString()  {
+    return $this->getWidget()->__toString();
   }
   
-  public function getSetting($setting, $default_value = null) {
-    return isset($this->settings[$setting])?$this->settings[$setting]:$default_value;
-  }
-  
-  public function setSetting($setting, $value)  {
-    $this->settings[$setting] = $value;
-  }
-  
-  public function getForm() {
-    if(!is_object($this->form))
-    {
-      throw new Exception('An error occured retrieving the form object.');
-    }
-    return $this->form;
-  }
-  
-  
-  public function getFriendlyName() {
-    if (isset($this->settings['label']))
-    {
-      return $this->settings['label'];
-    }
-    // Try to get it from language file
-    
-    if (cms_utils::get_module($this->module_name))
-    {
-      return cms_utils::get_module($this->module_name)->lang('form_'.$this->name);
-    }
-    return null;
-  }
-    
   public function getLabel()  {
-    return $this->getFriendlyName();
+    return $this->getWidget()->getLabel();
   }
   
   public function getLabelTag() {
-    return '<label for="'.$this->id.$this->name.'">' . $this->getLabel() . '</label>';
+    return $this->getWidget()->getLabelTag();
   }
   
   public function getTips() {
-    if (isset($this->settings['tips']))
-    {
-      return $this->settings['tips'];
-    }
-    // Try to get it from language file
-    
-    if (cms_utils::get_module($this->module_name))
-    {
-      // TODO: This should be shown only it the lang key exists...
-      //return cms_utils::get_module($this->module_name)->lang('tips_'.$this->name);
-    }
-    return null;
+    return $this->getWidget()->getTips();
   }
   
+  public function refresh() {
+    // TODO: Check consequences
+    $this->getWidget()->init();
+  }
+  
+  public function getName()  {
+    return $this->getWidget()->getName();
+  }
+  
+  public function getSetting($setting, $default_value = null) {
+    return $this->getWidget()->getSetting($setting, $default_value);
+  }
+  
+  public function setSetting($setting, $value)  {
+    $this->getWidget()->setSetting($setting, $value);
+  }
+  
+  public function getForm() {
+    return $this->getWidget()->getForm();
+  }
+  
+  public function getFriendlyName() {
+    return $this->getWidget()->getFriendlyName();
+  }
+    
   public function getInput()  {  
     if (!empty($this->input))
     {
       return $this->input;
     }
     
-    
-    if (cms_utils::get_module($this->module_name))
-    {
-      switch($this->type)
-      {
-        case 'text':
-          return $this->getWidget()->getInput();
-          // return $this->CreateInputText();        
-        case 'hidden':
-          return $this->getWidget()->getInput();
-          // return cms_utils::get_module($this->module_name)->CreateInputHidden($this->id, $this->name, $this->getValue());
-        case 'select':
-          return self::CreateSelector($this->id, $this->name, $this->getValues(), $this->settings);
-        case 'countries':
-          return self::CreateCountriesSelector($this->id, $this->name, $this->getValues(), $this->settings);
-        case 'checkbox':
-          return cms_utils::get_module($this->module_name)->CreateInputCheckbox($this->id, $this->name, '1', (integer)$this->getValue());
-        case 'textarea':
-          if (isset($this->settings['show_wysiwyg']) && $this->settings['show_wysiwyg'] == true)
-          {
-            return cms_utils::get_module($this->module_name)->CreateTextArea(true, $this->id, $this->getValue(), $this->name, $this->getSetting('class'), $this->getSetting('htmlid'));            
-          }
-          else
-          {
-            return cms_utils::get_module($this->module_name)->CreateTextArea(
-              false,
-              $this->id,
-              $this->getValue(), 
-              $this->name,
-              isset($this->settings['classname'])?$this->settings['classname']:'',
-              isset($this->settings['htmlid'])?$this->settings['htmlid']:'',
-              isset($this->settings['encoding'])?$this->settings['encoding']:'',
-              isset($this->settings['stylesheet'])?$this->settings['stylesheet']:'',
-              isset($this->settings['cols'])?$this->settings['cols']:'80',
-              isset($this->settings['rows'])?$this->settings['rows']:'15',            
-              isset($this->settings['forcewysiwyg'])?$this->settings['forcewysiwyg']:'',          
-              isset($this->settings['wantedsyntax'])?$this->settings['wantedsyntax']:'',            
-              isset($this->settings['addtext'])?$this->settings['addtext']:''    
-              );
-          }
-        case 'codearea':
-          return cms_utils::get_module($this->module_name)->CreateSyntaxArea($this->id, $this->getValue(), $this->name,'pagebigtextarea', '','', '', 90, 15);
-        case 'time':
-          return self::CreateTimeSelect($this->id,$this->name,$this->getValues());
-        case 'date':
-          return self::CreateDateSelect($this->id,$this->name,$this->getValues(), $this->settings);
-        case 'pages':
-          $this->settings['values'] = array(0 => '&laquo; ' . cms_utils::get_module('CMSForms')->lang('select one') . ' &raquo;') + self::getPagesList($this->id, $this->name,$this->getValue(), $this->settings);;
-          return self::CreateSelector($this->id, $this->name, $this->getValues(), $this->settings);
-
-        case 'static':
-          return $this->getValue();
-        case 'file':
-          return $this->getUploadField();
-        case 'password':
-          return cms_utils::get_module($this->module_name)->CreateInputPassword($this->id, $this->name, $this->getValue()
-          ,isset($this->settings['size'])?$this->settings['size']:20);
-        default:
-          return null;
-      }
-    }
-    return null;
-    
+    return $this->getWidget()->getInput();
   }
   
-  public function CreateInputText()
+  public function CreateInputText() 
   {
     $input = cms_utils::get_module($this->module_name)->CreateInputText($this->id, $this->name, $this->getValue(), isset($this->settings['size'])?$this->settings['size']:80, isset($this->settings['maxlength'])?$this->settings['maxlength']:255);
      
@@ -424,246 +318,80 @@ class CMSFormWidget  //extends CmsObject
   // PROCESS
   
   public function process($save = true) {
-    // Validate
-    $this->validate();
-    
-    // Save values
-    if ($save == true)
-    {
-      $this->save();
-    }
+    $this->getWidget()->process($save);
   }
   
   // VALIDATION
   
-  protected function validate() {
-    if (isset($this->settings['validators']) && is_array($this->settings['validators']))
-    {
-      //var_dump($this->settings['validators']);
-      // CHANGE THAT
-      
-      foreach ($this->settings['validators'] as $validator => $value)
-      {
-        $validate = new CMSFormValidator($this,$validator,$value);
-        try
-        {
-          if($validate->check() === false) $this->is_valid = false;
-        }
-        catch(Exception $e)
-        {
-          $this->setError($e->getMessage(), 'form error');
-        }
-        
-      }
-    }
-  }
-  
   public function isValid() {
-    if (($this->is_valid == false ) || $this->hasErrors())
-    {
-      return false;
-    }
-    return true;
+    return $this->getWidget()->isValid();
   }
   
   public function setValidator($validator, $params = array()) {
-    return $this->addValidator($validator, $params);
+    return $this->getWidget()->setValidator($validator, $params);
   }
   
   public function addValidator($validator, $params = array()) {
-    $this->settings['validators'][$validator] = $params;
+    $this->getWidget()->addValidator($validator, $params);
   }
   
   public function removeValidator($validator) {
-    unset($this->settings['validators'][$validator]);
-  }
-  
-  // SAVE
-  
-  protected function save() {
-    if($this->isValid() == true)
-    {
-      if (isset($this->settings['object']))
-      {
-        $this->saveObject();
-      }
-      if (isset($this->settings['preference']))
-      {
-        $this->savePreference();
-      }
-    }
-  }
-  
-  protected function saveObject() {
-    if(is_object($this->settings['object']) && $this->type != 'file')
-    {
-      // This do not save the object state, so we have to do it outside the form
-
-      if ($this->type == 'date')
-      {
-        //$values = $this->values; Always save it as a string
-        if (count($this->values) > 1)
-        {          
-          $values = $this->values['0'] . '-' . $this->values['1'] . '-' . $this->values['2'];
-        }
-        else
-        {
-          $values = $this->getValue();
-        }
-      }
-      elseif ($this->type == 'time')
-      {
-        //$values = $this->values; Always save it as a string
-        if (count($this->values) > 1)
-        {          
-          $values = $this->values['0'] . ':' . $this->values['1'] . ':' . $this->values['2'];
-        }
-        else
-        {
-          $values = $this->getValue();
-        }
-      }
-      else
-      {
-        $values = $this->getValue();
-      }    
-    
-      if (isset($this->settings['set_method']))
-      {
-        $this->settings['object']->{$this->settings['set_method']}($values);
-      }
-      else
-      {
-        if (isset($this->settings['field_name']))
-        {
-          $name = $this->settings['field_name'];
-        }
-        else
-        {
-          $name = $this->name;
-        }
-        
-        if(method_exists($this->settings['object'], 'set'))
-        {    
-          $this->settings['object']->set($name, $values);
-        }
-        else
-        {
-          try
-          {
-            $this->settings['object']->$name = $values;
-          }
-          catch(Exception $e)
-          {
-            die('unable to do');
-          }
-        }
-        
-        
-      }
-    }
-  }
-  
-  protected function savePreference() {
-    if(isset($this->settings['preference']) && !isset($_REQUEST[$this->id.'cancel']))
-    {
-      // Check if there is no cancel button first because we save the value directly !
-      cms_utils::get_module($this->module_name)->setPreference($this->settings['preference'], $this->getValue());
-    }
+    $this->getWidget()->removeValidator($validator);
   }
   
   // ACCESS
   
   public function getValue()  {
-    if (($this->type == 'date') &&  (count($this->values) > 1))
-    {
-      return $this->values['0'] . '-' . $this->values['1'] . '-' . $this->values['2'];
-    }  
-    elseif (($this->type == 'time') &&  (count($this->values) > 1))
-    {
-      return $this->values['0'] . ':' . $this->values['1'] . ':' . $this->values['2'];
-    }
-    elseif (count($this->values) == 1)
-    {
-      reset($this->values);
-      return (string) current($this->values);
-    }
-    else
-    {
-      return (string) implode('|||',$this->values);
-    }    
+    return $this->getWidget()->getValue(); 
   }
   
   public function setValue($value, $key = 0)  {
-    $this->values[$key] = (string)$value;
+    $this->getWidget()->setValue($value,$key);
   }
 
   public function removeValueIfEqual($value)  {
-    if($this->getValue() == $value)
-    {
-      $this->setValues(array());
-    }
+    $this->getWidget()->removeValueIfEqual($value);
   }
   
   public function getValues() {
-    return $this->values;
+    return $this->getWidget()->getValues();
   }
   
   public function setValues($values = array())  {
-    if (is_array($values))
-    {
-      $this->values = $values;
-    }
-    elseif (strpos($values, '|||') !== false)
-    {
-      $this->values = explode('|||', $values);
-    }
-    else
-    {
-      $this->values[0] = $values;
-    }    
+    $this->getWidget()->setValues($values);  
   }  
   
   public function setDefaultValues($values) {
-    if (is_array($values))
-    {
-      $this->values = $values;
-    }
-    else
-    {
-      $this->values = array($values);
-    }
+    $this->getWidget()->setDefaultValues($values);
   }
     
   public function isEmpty() {
-    if ((count($this->values) == 1) && (empty($this->values[0])) || (count($this->values) == 0))
-      return true;
-      return false;
+    return $this->getWidget()->isEmpty();
   }
     
   public function getStringValue()  {
     //DEPRECATED
-    return $this->getValue();
+    return $this->getWidget()->getValue();
   }
 
   public function getValuesToString() {
     // DEPRECATED
-    return (string)$this->getValue();
+    return (string)$this->getWidget()->getValue();
   }
   
-  public function isEmptyValues() {
-    //DEPRECATED
-    
-    if (is_array($this->values))
-    {
-      return $this->isEmpty();
-    }
-    elseif(empty($this->values))
-    {
-      return true;
-    }
-    return false;
-  }
+  // public function isEmptyValues() {
+  //   //DEPRECATED
+  //   
+  //   if (is_array($this->values))
+  //   {
+  //     return $this->isEmpty();
+  //   }
+  //   elseif(empty($this->values))
+  //   {
+  //     return true;
+  //   }
+  //   return false;
+  // }
   
   // DIVERS
   
@@ -687,47 +415,7 @@ class CMSFormWidget  //extends CmsObject
     }
   }
         
-  public function getUploadField()  {
-    $field = cms_utils::get_module($this->module_name)->CreateInputFile($this->id, $this->name, '', isset($this->settings['size'])?$this->settings['size']:30);
-    $html = '<span>';
-    if (!$this->isEmpty())
-    {
-      if(isset($this->settings['direct_link']) && $this->settings['direct_link'] != '')
-      {
-        $file_url = $this->settings['direct_link'];
-      }
-      else
-      {
-        $file_url = isset($this->settings['base_url'])?$this->settings['base_url']:'';
-        if ((substr($file_url, -1) != '/') && (substr($this->getValue(),0,1) != '/')) $file_url .'/';
-        $file_url .= $this->getValue();
-        $file_url = str_replace(DIRECTORY_SEPARATOR, '/', $file_url);
-      }
-      
-      if (self::isImage($this->getValue()))
-      {
-        $text = '<img src="'.$file_url.'" />';
-      }
-      else
-      {
-        $text = basename($this->values[0]);
-      }
-      
-      $html .= '<span style="display:block; margin-bottom: 7px;"><a href="'.$file_url. '" rel="external" >'. $text .'</a></span> ';
-      
-      if (isset($this->settings['delete_checkbox']))
-      {
-        $field .= ' ' .  cms_utils::get_module($this->module_name)->CreateInputCheckbox($this->id, $this->settings['delete_checkbox'], '1') . ' ' .  cms_utils::get_module($this->module_name)->lang('delete');
-      }
-    }
-    
-  
-    
-    $html .= $field . '</span>';
-    return $html;
-  }
-  
-  // Tools
+  // Tools (DEPRECATED ==> SEE CLASSES)
   
   public static function getPagesList($id,$name,$value,$settings = array()) {
     
@@ -801,7 +489,7 @@ class CMSFormWidget  //extends CmsObject
     
     return $html;
   }
-  
+    
   public static function createDateSelect($id,$name,$values,$settings)  {
     if (count($values) == 1)
     {
@@ -842,18 +530,22 @@ class CMSFormWidget  //extends CmsObject
   }
 
   public static function CreateNumberList($end, $start=0) {
-    if (($end < 0)||(!is_numeric($end))) $end = 1;
-    $list = array();
-    for ($i = $start; $i <= $end; $i++)
-    {
-      $list[$i] = (string)$i;
-    }
-    return $list;
+    return CMSFormInputDate::CreateNumberList($end, $start);
+    
+    // if (($end < 0)||(!is_numeric($end))) $end = 1;
+    // $list = array();
+    // for ($i = $start; $i <= $end; $i++)
+    // {
+    //   $list[$i] = (string)$i;
+    // }
+    // return $list;
   }
   
   public static function CreateCountriesSelector($id,$name,$values,$settings) {
-    $settings['values'] = CMSFormInputCountries::$countries;
-    return self::CreateSelector($id,$name,$values,$settings);
+    return CMSFormInputCountries::CreateCountriesSelector($id,$name,$values,$settings);
+    
+    // $settings['values'] = CMSFormInputCountries::$countries;
+    // return self::CreateSelector($id,$name,$values,$settings);
   }
   
   public static function CreateSelector($id,$name,$values,$settings)  {
@@ -861,180 +553,36 @@ class CMSFormWidget  //extends CmsObject
     return CMSFormInputSelect::CreateSelector($id,$name,$values,$settings);
     
     // DEPRECATED
-    if(isset($settings['expanded']) && $settings['expanded'] == true)
-    {
-      return self::CreateInputExpandedList($id, $name, isset($settings['values'])?$settings['values']:array(), $values, isset($settings['addtext'])?$settings['addtext']:'', isset($settings['multiple'])?true:false, $settings);
-    }
-    else
-    {
-      $items = isset($settings['values'])?$settings['values']:array();
-      if(isset($settings['include_custom']))
-      {
-        $items = array('' => $settings['include_custom']) + $items;
-      }
-      return self::CreateInputSelectList($id, $name, $items, $values, isset($settings['size'])?$settings['size']:1, '', isset($settings['multiple'])?true:false);
-    }
+    // if(isset($settings['expanded']) && $settings['expanded'] == true)
+    //    {
+    //      return self::CreateInputExpandedList($id, $name, isset($settings['values'])?$settings['values']:array(), $values, isset($settings['addtext'])?$settings['addtext']:'', isset($settings['multiple'])?true:false, $settings);
+    //    }
+    //    else
+    //    {
+    //      $items = isset($settings['values'])?$settings['values']:array();
+    //      if(isset($settings['include_custom']))
+    //      {
+    //        $items = array('' => $settings['include_custom']) + $items;
+    //      }
+    //      return self::CreateInputSelectList($id, $name, $items, $values, isset($settings['size'])?$settings['size']:1, '', isset($settings['multiple'])?true:false);
+    //    }
   }
   
   public static function CreateInputSelectList($id, $name, $items, $selecteditems=array(), $size=3, $addttext='', $multiple = true) {
     
     return CMSFormInputSelect::DeprecatedCreateInputSelectList($id, $name, $items, $selecteditems, $size, $addttext, $multiple);
-    
-    $id = cms_htmlentities($id);
-    $name = cms_htmlentities($name);
-    $size = cms_htmlentities($size);
-    $multiple = cms_htmlentities($multiple);
   
-    if($multiple == true)
-    {
-      $name .= '[]';
-    }
-  
-    $text = '<select name="'.$id.$name.'" id="'.$id.$name.'"';
-    if ($addttext != '')
-    {
-      $text .= ' ' . $addttext;
-    }
-    if( $multiple )
-      {
-      $text .= ' multiple="multiple" ';
-      }
-      
-      if ($size > 1)
-      {
-        $text .= ' size="'.$size.'"';
-      }
-    
-    $text .= '>';
-    
-    $count = 0;
-    foreach ($items as $key=>$value)
-    {
-      if (is_array($value))
-       {
-        $text .= '<optgroup label="' . $key . '">';
-        foreach ($value as $key2 => $entry)
-        {
-          $text .= self::generateOption($key2, $entry, $selecteditems);
-          $count++;
-        }
-        $text .= '</optgroup>';
-      }
-      else
-      {
-        $text .= self::generateOption($key, $value, $selecteditems);
-        $count++;
-      }
-    }
-    $text .= '</select>'."\n";
-  
-    return $text;
   }
-  
-  // protected static function generateOption($key, $value, $selecteditems)  {
-  //   // if (is_array($value))
-  //   //    {
-  //   //     $array = array_shift($value);
-  //   //     $key = implode('|',array_keys($array));
-  //   //     $value = implode('|', $array);
-  //   //   }
-  // 
-  //   //$value = cms_htmlentities($value);
-  //   $value = $value;
-  // 
-  //   $text = '<option value="'.$key.'"';
-  //   if (in_array($key, $selecteditems))
-  //   {
-  //     $text .= ' ' . 'selected="selected"';
-  //   }
-  //   $text .= '>';
-  //   $text .= $value;
-  //   $text .= '</option>';
-  //   
-  //   return $text;  
-  // }
   
   public static function CreateInputExpandedList($id, $name, $items, $selecteditems=array(), $addttext='', $multiple = true, $params = array()) {
     
     return CMSFormInputSelect::DeprecatedCreateInputExpandedList($id, $name, $items, $selecteditems, $addttext, $multiple, $params);
-    
-    $id = cms_htmlentities($id);
-    $name = cms_htmlentities($name);
-    $multiple = cms_htmlentities($multiple);
-  
-    $list = array();
-    foreach($items as $key => $item)
-    {
-      if (is_array($item))
-      {
-        $list[] = array('label' => '<strong>' . $key . '</strong>', 'input' => '');
-  
-        foreach($item as $key2 => $entry)
-        {
-           self::generateExpandedList($list, $id, $entry, $name, $key2, $selecteditems, $multiple, $addttext);
-        }
-        
-      }
-      else
-      {
-        self::generateExpandedList($list, $id, $item, $name, $key, $selecteditems, $multiple, $addttext);
-      }
-    }
-    
-    if(isset($params['mode']) && ($params['mode'] == 'html'))
-    {
-      // TODO
-      return 'Not implemented yet';
-    }
-    elseif(isset($params['mode']) && ($params['mode'] == 'array'))
-    {
-      return $list;
-    }
-    else
-    {
-      $html = '';
-      if (count($list) > 0)
-      {
-        $html .= '<ul>';
-        foreach($list as $item)
-        {
-          $html .= '<li>'.$item['input']. ' '. $item['label'] .'</li>';
-        }
-        $html .= '</ul>';
-      }
-      return $html;
-    }
-  
+      
   }
   
-  // protected static function generateExpandedList(&$list, $id, $item, $name, $key, $selecteditems, $multiple, $addttext) {
-  //   if (in_array($key, $selecteditems))
-  //   {
-  //     $text = ' checked="checked"' . ' ' . $addttext;
-  //   }
-  //   else
-  //   {
-  //     $text = ' ' . $addttext;
-  //   }
-  //   
-  //   if($multiple)
-  //   {        
-  //     $list[] = array(
-  //       'label' => '<label for="'.$id.$name.'['.$key.']">' . $item . '</label>',
-  //       'input' => '<input type="checkbox" name="'.$id.$name.'['.$key.']" id="'.$id.$name.'['.$key.']" value="'.$key.'"'.$text.' />'
-  //       );
-  //   }
-  //   else
-  //   {
-  //     $list[] = array(
-  //       'label' => '<label for="'.$id.$name.$key.'">' . $item . '</label>',
-  //       'input' => '<input type="radio" name="'.$id.$name.'" id="'.$id.$name.$key.'" value="'.$key.'"'.$text.' />'
-  //       );
-  //   }
-  //   return $list;
-  // }
-  
-  //
+  public function getUploadField()  {
+    return $this->getWidget()->getUploadField();
+  }
   
   public static function isImage($filename) {
     $valid_extensions = array('jpeg','jpg','gif','png');
@@ -1060,44 +608,23 @@ class CMSFormWidget  //extends CmsObject
   // ERRORS
     
   public function hasErrors() {
-    if (count($this->form_errors) == 0)
-    {
-      return false;
-    }
-    return true;
+    return $this->getWidget()->hasErrors();
   }
 
   public function noError() {
-    return !$this->hasErrors();
+    return !$this->getWidget()->hasErrors();
   }
 
   public function getErrors() {
-    return $this->form_errors;
+    return $this->getWidget()->getErrors();
   }
 
   public function showErrors()  {
-    $html = '';
-    if(count($this->form_errors) > 0)
-    {
-      $html .= '<ul class="form_widget_errors">';
-      foreach($this->form_errors as $priority => $errors)
-      {
-        $html .= '<li>';
-        if ($this->show_priority) $html .= '<em class="form_widget_error_priority">'.$priority.'</em>';
-        $html .= '<ul>';
-        foreach($errors as $error)
-        {
-          $html .= '<li class="form_widget_error_message">'.$error.'</li>';
-        }        
-        $html .= '</ul></li>';
-      }
-      $html .= '</ul>';
-    }
-    return $html;
+    return $this->getWidget()->showErrors();
   }
 
   public function setError($message,$priority='default')  {
-    $this->form_errors[$priority][] = $message;
+    $this->getWidget()->setError($message, $priority);
   }
 
 }

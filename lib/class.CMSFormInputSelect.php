@@ -12,7 +12,8 @@
     }
     
     
-    public static function CreateSelector($id,$name,$values,$settings)  {
+    public static function CreateSelector($id,$name,$values,$settings = array())  {
+      
       if(isset($settings['expanded']) && $settings['expanded'] == true)
       {
         return self::CreateInputExpandedList($id, $name, isset($settings['values'])?$settings['values']:array(), $values, isset($settings['addtext'])?$settings['addtext']:'', isset($settings['multiple'])?true:false, $settings);
@@ -24,11 +25,11 @@
         {
           $items = array('' => $settings['include_custom']) + $items;
         }
-        return self::CreateInputSelectList($id, $name, $items, $values, isset($settings['size'])?$settings['size']:1, '', isset($settings['multiple'])?true:false);
+        return self::CreateInputSelectList($id, $name, $items, $values, isset($settings['size'])?$settings['size']:1, isset($settings['addtext'])?$settings['addtext']:'', isset($settings['multiple'])?true:false, $settings);
       }
     }
     
-    protected static function CreateInputSelectList($id, $name, $items, $selecteditems=array(), $size=3, $addttext='', $multiple = true) {
+    protected static function CreateInputSelectList($id, $name, $items, $selecteditems=array(), $size=3, $addttext='', $multiple = true, $settings = array()) {
       $id = cms_htmlentities($id);
       $name = cms_htmlentities($name);
       $size = cms_htmlentities($size);
@@ -40,10 +41,12 @@
       }
 
       $text = '<select name="'.$id.$name.'" id="'.$id.$name.'"';
+      
       if ($addttext != '')
       {
         $text .= ' ' . $addttext;
       }
+      
       if( $multiple )
         {
         $text .= ' multiple="multiple" ';
@@ -53,6 +56,17 @@
         {
           $text .= ' size="'.$size.'"';
         }
+        
+      if(isset($settings['class']))
+      {
+        if(is_array($settings['class'])) $settings['class'] = implode(' ', $settings['class']);
+        $text .= ' class="' . $settings['class'] .'"';
+      }
+
+      if((count($items) > 0) && (key($items) == 0) && !is_array(current($items)))
+      {
+        $text .= ' data-placeholder="'.(string)current($items).'"';
+      }
 
       $text .= '>';
 

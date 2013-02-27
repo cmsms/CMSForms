@@ -13,8 +13,10 @@
 class CMSForms extends CMSModule
 {
 	public function GetName()               { return 'CMSForms';	               }
-	public function GetVersion()            { return '0.3.5';                    }
+	public function GetVersion()            { return '1.0.8';                    }
 	public function GetAuthor()             { return 'Jean-Christophe Cuvelier'; }
 	public function GetAuthorEmail()        { return 'cybertotophe@gmail.com';   }
+	
+  public  function GetHelp() {              return $this->Lang('help');  }
   /* Comment from Cloud9 IDE */
 }
