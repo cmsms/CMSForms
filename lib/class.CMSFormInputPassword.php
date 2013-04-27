@@ -8,7 +8,13 @@
   {
     public function getInput()
     {
-      return $this->getModule()->CreateInputPassword($this->id, $this->name, $this->getValue()
-      ,$this->getSetting('size', 20));
+      return $this->getModule()->CreateInputPassword($this->id, $this->name, '',$this->getSetting('size', 20));
     }
+
+    public function save() {
+			if($this->getValue() != '')
+      {
+				parent::save();
+			}
+		}
   }
