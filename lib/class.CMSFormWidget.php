@@ -21,6 +21,7 @@ class CMSFormWidget  //extends CmsObject
     'password'  => array('title' => 'Password',   'ado' => 'C(255)'),
     'date'       => array('title' => 'Date',       'ado' => 'DT'),
     'time'       => array('title' => 'Time',       'ado' => 'DT'),
+    'datetime'       => array('title' => 'Date & Time',	'ado' => 'I'),
     'file'       => array('title' => 'File',       'ado' => 'C(255)'));
   
   // REFACTOR
@@ -65,6 +66,8 @@ class CMSFormWidget  //extends CmsObject
         return new CMSFormInputSyntaxarea();      
       case 'date':
         return new CMSFormInputDate();
+			case 'datetime':
+        return new CMSFormInputDateTime();
       case 'time':
         return new CMSFormInputTime();
       case 'checkbox':
@@ -111,19 +114,33 @@ class CMSFormWidget  //extends CmsObject
   protected $settings = array();
   protected $form_errors;
   protected $show_priority = false;
-//  protected $validations = array();
+  //  protected $validations = array();
   protected $showned = false;
   protected $form;
   
   protected $is_valid = true;
   protected $template = '%INPUT%';
-  
 
-    
   public static $countries = array(); //DEPRECATED CMSFormInputCountries::$countries;
-  
 
-  
+
+  public function __get($name)  {
+    if(isset($this->$name))
+    {
+        return $this->$name;
+    }
+    else
+    {
+        $trace = debug_backtrace();
+        trigger_error(
+            'Undefined property via __get(): ' . $name .
+            ' in ' . $trace[0]['file'] .
+            ' on line ' . $trace[0]['line'],
+            E_USER_NOTICE);
+        return null;
+    }
+  }
+
   // SETUP
   public function hide()  {
     
@@ -239,6 +256,7 @@ class CMSFormWidget  //extends CmsObject
           }
         }      
       }
+      return null;
   }
   
   // LINKED TO WIDGETS  

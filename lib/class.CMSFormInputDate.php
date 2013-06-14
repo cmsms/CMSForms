@@ -14,7 +14,7 @@
       }
       else
       {
-        return implode('|||', $this->values);
+        return implode('-', $this->values);
       }
     }
     
@@ -27,7 +27,7 @@
       $list = array();
       for ($i = $start; $i <= $end; $i++)
       {
-        $list[$i] = (string)$i;
+        $list[$i] = ($i < 10)? '0' . (string)$i:(string)$i;
       }
       return $list;
     }

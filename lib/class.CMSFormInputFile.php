@@ -30,7 +30,7 @@
         else
         {
           $file_url = isset($this->settings['base_url'])?$this->settings['base_url']:'';
-          if ((substr($file_url, -1) != '/') && (substr($this->getValue(),0,1) != '/')) $file_url .'/';
+          if ((substr($file_url, -1) != '/') && (substr($this->getValue(),0,1) != '/')) $file_url .= '/';
           $file_url .= $this->getValue();
           $file_url = str_replace(DIRECTORY_SEPARATOR, '/', $file_url);
         }
