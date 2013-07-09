@@ -20,7 +20,14 @@ class CMSFormInputSelect extends CMSFormInput
         } else {
             $items = isset($settings['values']) ? $settings['values'] : array();
             if (isset($settings['include_custom'])) {
-                $items = array('' => $settings['include_custom']) + $items;
+                if(isset($settings['custom_value']))
+                {
+                    $items = array($settings['custom_value'] => $settings['include_custom']) + $items;
+                }
+                else
+                {
+                    $items = array('' => $settings['include_custom']) + $items;
+                }
             }
             return self::CreateInputSelectList($id, $name, $items, $values, isset($settings['size']) ? $settings['size'] : 1, isset($settings['addtext']) ? $settings['addtext'] : '', isset($settings['multiple']) ? true : false, $settings);
         }

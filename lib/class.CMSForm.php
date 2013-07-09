@@ -47,8 +47,15 @@ class CMSForm  //extends  CmsObject
     );
   
   protected $action_url; // To specify a different form action
-  
-  public function __construct($module_name, $id, $action, $returnid)
+
+    /**
+     * @param string $module_name The module name for the form
+     * @param string $id The ID of the page
+     * @param string $action The action you want to execute
+     * @param string $returnid The return ID (return page)
+     */
+
+    public function __construct($module_name, $id, $action, $returnid)
   {
     $this->module_name = $module_name;
     $this->id = $id;
@@ -238,8 +245,16 @@ class CMSForm  //extends  CmsObject
     
     return $html;
   }
-  
-  public function setWidget($name,$type,$settings = array())
+
+    /**
+     * Add an input field to the form
+     * @param string $name The name of the input field
+     * @param string $type The type of input
+     * @param array $settings
+     * @return null
+     */
+
+    public function setWidget($name,$type,$settings = array())
   {
     $widget = new CMSFormWidget($this,$this->id,$this->module_name,$name,$type,$settings);
     if ($type == 'hidden')
@@ -273,8 +288,14 @@ class CMSForm  //extends  CmsObject
   {
     return $this->widgets;
   }
-  
-  public function & getWidget($name)
+
+    /**
+     * @param string $name The widget name
+     *
+     * @return CMSFormWidget|null
+     */
+
+    public function & getWidget($name)
   {
     if (isset($this->widgets[$name]))
     {
@@ -450,27 +471,24 @@ class CMSForm  //extends  CmsObject
     return false;
   }
 
-  public function isPosted()
+    /**
+     * @return bool
+     * @deprecated Use isSent
+     */
+
+    public function isPosted()
   {
-    foreach($this->active_buttons as $button)
-    {
-      if($button != '')
-      {
-        if($this->isPushed($button))
-        {
-          return true;
-        }
-      }
-    }
-    // Add check for next and previous
-    // if ($this->isSubmitted() || $this->isApplied())
-    // {
-    //   return true;
-    // }
-    return false;
+    return $this->isSent();
   }
-  
-  public function isPushed($button)
+
+    /**
+     * Verify that the form has been submitted via a specific button
+     * @param string $button
+     *
+     * @return bool
+     */
+
+    public function isPushed($button)
   {
     if (isset($_REQUEST[$this->id.$button]))
     {
@@ -478,12 +496,17 @@ class CMSForm  //extends  CmsObject
     }
     return false;
   }
-  
-  public function isSent()
+
+    /**
+     * Verify that the form has been sent (via any active buttons)
+     * @return bool
+     */
+
+    public function isSent()
   {
       foreach($this->active_buttons as $button)
       {
-          if (isset($_REQUEST[$this->id.$button]))
+          if ($this->isPushed($button))
           {
             return true;
           }
