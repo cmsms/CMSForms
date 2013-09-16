@@ -473,7 +473,7 @@ class CMSForm  //extends  CmsObject
 
     /**
      * @return bool
-     * @deprecated Use isSent
+     * @deprecated since 1.10.8 Use isSent
      */
 
     public function isPosted()

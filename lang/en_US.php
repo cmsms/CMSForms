@@ -18,7 +18,6 @@ $lang = array(
 	
 	
 	'help' => '
-	
 	<h3>How to use this module?</h3>
 	<p>This module is aimed to replace the traditional way of manipulate forms in CMSMS "API". It allows you to focus more on your objects and code.</p>
 	
@@ -38,6 +37,31 @@ $lang = array(
   
   $this->smarty->assign(\'form\', $form);
   </textarea>
+  <h3>Smarty side</h3>
+  <code><pre>
+  {if isset($form)}
+    {if $form-&gt;hasErrors()}&lt;div style=&quot;color: red;&quot;&gt;{$form-&gt;showErrors()}&lt;/div&gt;{/if}
+	{$form-&gt;getHeaders()}
+
+	{$form-&gt;showWidgets(\&#x27;&lt;div class=&quot;pageoverflow&quot;&gt;
+		&lt;div class=&quot;pagetext&quot;&gt;%LABEL%:&lt;/div&gt;
+		&lt;div class=&quot;pageinput&quot;&gt;%INPUT% &lt;em&gt;%TIPS%&lt;/em&gt;&lt;/div&gt;
+		&lt;div class=&quot;pageinput&quot; style=&quot;color: red;&quot;&gt;%ERRORS%&lt;/div&gt;
+	&lt;/div&gt;\&#x27;)}
+
+	{$form-&gt;renderFieldsets(\&#x27;&lt;div class=&quot;pageoverflow&quot;&gt;
+		&lt;div class=&quot;pagetext&quot;&gt;%LABEL%:&lt;/div&gt;
+		&lt;div class=&quot;pageinput&quot;&gt;%INPUT% &lt;em&gt;%TIPS%&lt;/em&gt;&lt;/div&gt;
+		&lt;div class=&quot;pageinput&quot; style=&quot;color: red;&quot;&gt;%ERRORS%&lt;/div&gt;
+	&lt;/div&gt;\&#x27;)}
+
+	&lt;p&gt;
+		{$form-&gt;getButtons()}
+	&lt;/p&gt;
+	{$form-&gt;getFooters()}
+{/if}
+  </pre></code>
+
 	<h3>Credits</h3>
 	<p>Jean-Christophe Cuvelier - totophe@totophe.com</p>	
 	',
