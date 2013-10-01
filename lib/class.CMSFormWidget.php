@@ -77,7 +77,7 @@ class CMSFormWidget  //extends CmsObject
       case 'file':
         return new CMSFormInputFile();
       case 'static':
-        return new CMSFormInput();
+        return new CMSFormInputStatic();
       default:
         $class = 'CMSFormInput' . $type;
         if(class_exists($class))

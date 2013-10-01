@@ -10,7 +10,7 @@
 class CMSForms extends CMSModule
 {
 	public function GetName()               { return 'CMSForms';	               }
-	public function GetVersion()            { return '1.10.11';                    }
+	public function GetVersion()            { return '1.10.14';                    }
 	public function GetAuthor()             { return 'Jean-Christophe Cuvelier'; }
 	public function GetAuthorEmail()        { return 'jcc@atomseeds.com';   }
 	
