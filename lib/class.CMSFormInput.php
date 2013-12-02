@@ -25,6 +25,18 @@ class CMSFormInput
     protected $showned = false;
     protected $hide = false;
 
+    protected $template = '<div class="form_widget">
+        <div class="form_label"><label for="%ID%">%LABEL%</label></div>
+        <div class="form_errors">%ERRORS%</div>
+        <div class="form_input">%INPUT% <em>%TIPS%</em></div>
+      </div>';
+
+    protected $admin_template = '<div class="pageoverflow">
+		<div class="pagetext">%LABEL%:</div>
+		<div class="pageinput">%INPUT% <em>%TIPS%</em></div>
+		<div class="pageinput" style="color: red;">%ERRORS%</div>
+	</div>';
+
     public function __construct()
     {
         return $this;
@@ -118,10 +130,10 @@ class CMSFormInput
         if ((!$this->showned || $force)) {
             $html = '';
 
-
-            // if (!is_null($template) && ($this->type != 'hidden')) // FIXTHIS
+            // if (!is_null($template) && ($this->type != 'hidden')) // FIXME
             if (!is_null($template)) {
-                $text = str_replace('%FIELDNAME%', $this->name, $template);
+                $text = str_replace('%ID%', $this->id . $this->name, $template);
+                $text = str_replace('%FIELDNAME%', $this->name, $text);
                 $text = str_replace('%LABEL%', $this->getLabel(), $text);
                 $text = str_replace('%LABEL_TAG%', $this->getLabelTag(), $text);
                 $text = str_replace('%INPUT%', $this->getInput(), $text);
@@ -148,18 +160,21 @@ class CMSFormInput
 
     public function __toString()
     {
-        // TODO: REFACTORING
+        return $this->show($this->getTemplate());
+    }
 
-        $html = '
-      <div class="form_widget">
-        <div class="form_label"><label for="' . $this->id . $this->name . '">' . $this->getLabel() . '</label></div>';
-        if ($this->hasErrors()) {
-            $html .= '<div class="form_errors">' . $this->showErrors() . '</div>';
+    public function getTemplate()
+    {
+        global $CMS_ADMIN_PAGE;
+
+        if($CMS_ADMIN_PAGE)
+        {
+            return $this->admin_template;
         }
-        $html .= '
-        <div class="form_input">' . $this->getInput() . '</div>
-      </div>';
-        return $html;
+        else
+        {
+            return $this->template;
+        }
     }
 
     public function getLabel()
@@ -239,13 +254,10 @@ class CMSFormInput
                 try {
                     $this->settings['object']->$name = $values;
                 } catch (Exception $e) {
-                    die('unable to do');
+                    die('Unable to save the object: ' . $e->getMessage());
                 }
             }
-
-
         }
-
     }
 
     protected function savePreference()
@@ -303,7 +315,7 @@ class CMSFormInput
                     try {
                         return $this->settings['object']->$name;
                     } catch (Exception $e) {
-                        //  die('unable to do'); // TODO: Treath error
+                        audit('', 'CMSForms', 'Unable to retrieve value for field ' . $name . ' with message ' .  $e->getMessage());
                     }
                 }
             }

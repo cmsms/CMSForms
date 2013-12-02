@@ -49,6 +49,7 @@ class CMSForm  //extends  CmsObject
   protected $action_url; // To specify a different form action
 
     /**
+     * Create a form
      * @param string $module_name The module name for the form
      * @param string $id The ID of the page
      * @param string $action The action you want to execute
