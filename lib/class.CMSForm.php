@@ -255,7 +255,7 @@ class CMSForm  //extends  CmsObject
      * @return null
      */
 
-    public function setWidget($name,$type,$settings = array())
+    public function setWidget($name,$type = 'text',$settings = array())
   {
     $widget = new CMSFormWidget($this,$this->id,$this->module_name,$name,$type,$settings);
     if ($type == 'hidden')

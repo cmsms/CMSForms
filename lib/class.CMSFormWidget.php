@@ -23,7 +23,9 @@ class CMSFormWidget  //extends CmsObject
     'time'       => array('title' => 'Time',       'ado' => 'DT'),
     'datetime'       => array('title' => 'Date & Time',	'ado' => 'I'),
     'file'       => array('title' => 'File',       'ado' => 'C(255)'));
-  
+
+  const FIELD_TEXT = 'text';
+
   // REFACTOR
   
   public function __construct(&$form, $id, $module_name, $name, $type,$settings=array()) {

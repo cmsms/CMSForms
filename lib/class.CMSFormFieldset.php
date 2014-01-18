@@ -44,8 +44,8 @@ class CMSFormFieldset extends CMSForm
     return $html;
     
   }
-  
-  public function setWidget($name,$type,$settings = array())
+
+  public function setWidget($name,$type = 'text',$settings = array())
   {
     if ($type == 'file')
     {
