@@ -15,6 +15,11 @@
         $input = str_replace('class="cms_textfield"', 'class="'.(string)$this->settings['classname'].'"', $input);
       }
 
+      if(isset($this->settings['placeholder']))
+      {
+        $input = str_replace('>', 'placeholder="'.(string)$this->settings['placeholder'].'">', $input);
+      }
+
       return $input;
     }
   }

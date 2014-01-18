@@ -60,15 +60,13 @@ class CMSFormValidator
     $value = $this->widget->getValue();
     if (call_user_func($this->params, $value) !== null)
     {
-      global $gCms;
       throw new Exception($this->getErrorMessage('field not unique', $value));
     }
     return true;
   }
   
   protected function CheckNotEmpty()
-  {  
-    global $gCms;
+  {
     $values = $this->widget->getValues();
     $value = $this->widget->getValue();
     if (is_array($values) && count($values) == 0)
@@ -88,7 +86,6 @@ class CMSFormValidator
   
   protected function CheckEqualField()
   {
-    global $gCms;
       $value1 = serialize($this->widget->getValues());
       
       try
@@ -115,7 +112,6 @@ class CMSFormValidator
     $email = implode('|', $this->widget->getValues());
     if (!self::validEmail($email))
     {
-      global $gCms;
       throw new Exception($this->getErrorMessage('invalid email', $email));
     }
     return true;

@@ -1,0 +1,2 @@
+1.10.14
+- Add Input Static type (to fix a db issue): Static fields are not saved anymore.

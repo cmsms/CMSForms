@@ -18,6 +18,7 @@ class CMSForm  //extends  CmsObject
   protected $action;  
   protected $method = 'get';
   protected $enctype;
+  protected $inline = false;
   
   protected $widgets = array(); // The form widgets
   protected $hidden_widgets = array(); // Specific widgets shown on the begin;
@@ -38,14 +39,23 @@ class CMSForm  //extends  CmsObject
   protected $templates = array(
     'widget' => '<div class="pageoverflow">
       <div class="pagetext">%LABEL%:</div>
-      <div class="pageinput">%INPUT% <em>%TIPS%</em></div>
+      <div class="pageinput">%PREFIX% %INPUT% %SUFIX%<em>%TIPS%</em></div>
       <div class="pageinput" style="color: red;">%ERRORS%</div>
     </div>',
     'errors' => '<div style="color: red;">%ERRORS%</div>',
     'buttons' => '<p>%BUTTONS%</p>'
     );
   
-  public function __construct($module_name, $id, $action, $returnid)
+  protected $action_url; // To specify a different form action
+
+    /**
+     * @param string $module_name The module name for the form
+     * @param string $id The ID of the page
+     * @param string $action The action you want to execute
+     * @param string $returnid The return ID (return page)
+     */
+
+    public function __construct($module_name, $id, $action, $returnid)
   {
     $this->module_name = $module_name;
     $this->id = $id;
@@ -53,6 +63,11 @@ class CMSForm  //extends  CmsObject
     $this->action = $action;
     
     return $this;
+  }
+  
+  public function __toString()
+  {
+    return $this->render();
   }
   
   public function getId()
@@ -70,12 +85,22 @@ class CMSForm  //extends  CmsObject
     return $this;
   }
   
+  public function setActionUrl($action_url)
+  {
+    $this->action_url = $action_url;
+  }
+  
   public function setMultipartForm()
   {
     $this->method = 'post';
     $this->enctype = 'multipart/form-data';
     
     return $this;
+  }
+  
+  public function setInline()
+  {
+    $this->inline = true;
   }
   
   public function process()
@@ -124,7 +149,8 @@ class CMSForm  //extends  CmsObject
   
   public function render()
   {
-    $file = dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'admin.form.tpl';
+    // $file = dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'admin.form.tpl';
+    $file = dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'admin.form.tpl';
     // $file2 = 'admin.form.tpl';
     // We load the template here because of Smarty restrictions
     // $template = file_get_contents($file);
@@ -152,7 +178,19 @@ class CMSForm  //extends  CmsObject
   {
     if (cms_utils::get_module($this->module_name))
     {      
-      $html = cms_utils::get_module($this->module_name)->CreateFormStart($this->id, $this->action, $this->returnid, $this->method, $this->enctype);
+      if($this->action_url)
+      {
+        $html = '<form name="' . $this->id . '" method="' . $this->method . '" action="' . $this->action_url . '"';
+        
+        if($this->enctype) $html .= ' enctype="' . $this->enctype . '"';
+        
+        $html .= '>';
+      }
+      else
+      {
+        $html = cms_utils::get_module($this->module_name)->CreateFormStart($this->id, $this->action, $this->returnid, $this->method, $this->enctype, $this->inline);
+      }
+      
       foreach($this->hidden_widgets as $widget)
       {
         $html .= $widget->getInput();
@@ -207,8 +245,16 @@ class CMSForm  //extends  CmsObject
     
     return $html;
   }
-  
-  public function setWidget($name,$type,$settings = array())
+
+    /**
+     * Add an input field to the form
+     * @param string $name The name of the input field
+     * @param string $type The type of input
+     * @param array $settings
+     * @return null
+     */
+
+    public function setWidget($name,$type,$settings = array())
   {
     $widget = new CMSFormWidget($this,$this->id,$this->module_name,$name,$type,$settings);
     if ($type == 'hidden')
@@ -242,8 +288,14 @@ class CMSForm  //extends  CmsObject
   {
     return $this->widgets;
   }
-  
-  public function & getWidget($name)
+
+    /**
+     * @param string $name The widget name
+     *
+     * @return CMSFormWidget|null
+     */
+
+    public function & getWidget($name)
   {
     if (isset($this->widgets[$name]))
     {
@@ -419,27 +471,24 @@ class CMSForm  //extends  CmsObject
     return false;
   }
 
-  public function isPosted()
+    /**
+     * @return bool
+     * @deprecated since 1.10.8 Use isSent
+     */
+
+    public function isPosted()
   {
-    foreach($this->active_buttons as $button)
-    {
-      if($button != '')
-      {
-        if($this->isPushed($button))
-        {
-          return true;
-        }
-      }
-    }
-    // Add check for next and previous
-    // if ($this->isSubmitted() || $this->isApplied())
-    // {
-    //   return true;
-    // }
-    return false;
+    return $this->isSent();
   }
-  
-  public function isPushed($button)
+
+    /**
+     * Verify that the form has been submitted via a specific button
+     * @param string $button
+     *
+     * @return bool
+     */
+
+    public function isPushed($button)
   {
     if (isset($_REQUEST[$this->id.$button]))
     {
@@ -447,12 +496,17 @@ class CMSForm  //extends  CmsObject
     }
     return false;
   }
-  
-  public function isSent()
+
+    /**
+     * Verify that the form has been sent (via any active buttons)
+     * @return bool
+     */
+
+    public function isSent()
   {
       foreach($this->active_buttons as $button)
       {
-          if (isset($_REQUEST[$this->id.$button]))
+          if ($this->isPushed($button))
           {
             return true;
           }
@@ -504,58 +558,3 @@ class CMSForm  //extends  CmsObject
   
 }
 
-class CMSFormFieldset extends CMSForm
-{
-  protected $parent_form;
-  protected $name;
-  protected $legend;
-  protected $class;
-  protected $rendered = false;
-  
-  public function __construct($form, $name, $legend = '')
-  {
-    parent::__construct($form->module_name, $form->id, $form->action, $form->returnid);
-    $this->name = $name;
-    if($legend == '')
-    {
-      $this->legend = $name;
-    }
-    else
-    {
-      $this->legend = $legend;
-    }
-    $this->parent_form =& $form;
-  }
-  
-  public function setClass($class)
-  {
-    $this->class = $class;
-  }
-  
-  public function render($widget_template=null, $legend = true)
-  {
-    $html = '';
-    if(!$this->rendered)
-    {
-      $html .= '<fieldset';
-      $html .= ($this->class)?' class="' . $this->class . '"':'';
-      $html .='>';
-      if($legend) $html .='<legend>'.$this->legend.'</legend>';
-      $html .= $this->showWidgets($widget_template);
-      $html .= '</fieldset>';
-      $this->rendered = true;
-    }
-    return $html;
-    
-  }
-  
-  public function setWidget($name,$type,$settings = array())
-  {
-    if ($type == 'file')
-    {
-      $this->parent_form->setMultipartForm();
-    }
-    parent::setWidget($name,$type,$settings);
-  }
-  
-}

@@ -4,7 +4,7 @@
     CMSForm Input Time
   */
   
-  class CMSFormInputTime extends CMSFormInput
+  class CMSFormInputTime extends CMSFormInputDate
   {
     
     public function getValue()  {
@@ -14,7 +14,22 @@
       }
       else
       {
-        return null;
+        return implode(':', $this->values);
       }
-    }    
+    }
+    
+    public function getInput() {
+      return self::CreateTimeSelect($this->id,$this->name,$this->getValues());
+    }
+    
+    protected static function CreateTimeSelect($id,$name,$values, $pos = 0)  {
+      if (count($values) == 1)
+      {
+        if (strpos($values[0], ':') !== false) $values = explode(':',$values[0]);
+      }
+      $hours = self::CreateInputSelectList($id,$name.'['.$pos.']',self::CreateNumberList(23),array($values[0]),1,'',false);
+      $minutes = self::CreateInputSelectList($id,$name.'['.($pos+1).']',self::CreateNumberList(59),array($values[1]),1,'',false);
+      $seconds = self::CreateInputSelectList($id,$name.'['.($pos+2).']',self::CreateNumberList(59),array($values[2]),1,'',false);
+      return $hours . ' : ' . $minutes . ' : ' . $seconds;
+    }
   }
