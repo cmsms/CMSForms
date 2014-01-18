@@ -197,39 +197,13 @@ class CMSFormInput
         return '<label for="' . $this->id . $this->name . '">' . $this->getLabel() . '</label>';
     }
 
-    public function getTips()
-    {
-        if (isset($this->settings['tips'])) {
-            return $this->settings['tips'];
+      if(isset($this->settings['default_value']) && !$this->getForm()->isPosted()) 
+      {
+        if ($this->isEmpty())
+        {
+          $this->setValues($this->settings['default_value']);
         }
-        // Try to get it from language file
-
-        // if (cms_utils::get_module($this->module_name))
-        //   {
-        //     // TODO: This should be shown only it the lang key exists...
-        //     return cms_utils::get_module($this->module_name)->lang('tips_'.$this->name);
-        //   }
-        return null;
-    }
-
-
-    // ##### VALUES #####
-
-    // SAVE
-
-    public function save()
-    {
-        if ($this->isValid() == true) {
-            if (isset($this->settings['object'])) {
-                $this->saveObject();
-            }
-            if (isset($this->settings['preference'])) {
-                $this->savePreference();
-            }
-            if (isset($this->settings['user_preference'])) {
-                $this->saveUserPreference();
-            }
-        }
+      }
     }
 
     protected function saveObject()
@@ -331,20 +305,17 @@ class CMSFormInput
         }
         return null;
     }
-
-    public function resetValues()
-    {
-        $this->values = array();
-    }
-
-    public function getValue()
-    {
-        if (count($this->values) == 1) {
-            reset($this->values);
-            return (string)current($this->values);
-        } else {
-            return (string)implode('|||', $this->values);
-        }
+    
+    public function getValue()  {       
+      if (count($this->values) == 1)
+      {
+        reset($this->values);
+        return (string) current($this->values);
+      }
+      else
+      {
+        return (string) implode('|||',$this->values);
+      }    
     }
 
     public function setValue($value, $key = 0)
