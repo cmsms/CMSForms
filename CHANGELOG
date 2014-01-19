@@ -1,1 +1,5 @@
-
+1.10.16
+-------
+- Errors messages can be translated using I18n
+- Validators are now in separate classes
+- Validators can now directly passed from the widget constructor (ex: 'validators' => array('my_validator' => new CMSFValidatorNotEmpty(array('foo' => 'bar')))

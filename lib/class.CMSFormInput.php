@@ -37,10 +37,10 @@ class CMSFormInput
 		<div class="pageinput" style="color: red;">%ERRORS%</div>
 	</div>';
 
-    public function __construct()
-    {
-        return $this;
-    }
+//    public function __construct()
+//    {
+//        return $this;
+//    }
 
     public function __get($name)
     {
@@ -76,6 +76,9 @@ class CMSFormInput
         return $this;
     }
 
+    /**
+     * @return CMSForm
+     */
     public function getForm()
     {
         if (!is_object($this->form)) {
@@ -104,6 +107,11 @@ class CMSFormInput
     }
 
     // ##### FORM #####
+
+    public function getName()
+    {
+        return $this->name;
+    }
 
     public function getInput()
     {
@@ -167,15 +175,13 @@ class CMSFormInput
     {
         global $CMS_ADMIN_PAGE;
 
-        if($CMS_ADMIN_PAGE)
-        {
+        if ($CMS_ADMIN_PAGE) {
             return $this->admin_template;
-        }
-        else
-        {
+        } else {
             return $this->template;
         }
     }
+
 
     public function getLabel()
     {
@@ -186,10 +192,19 @@ class CMSFormInput
         return $this->getModule()->lang('form_' . $this->name);
     }
 
+    /**
+     * @return string
+     */
     public function getFriendlyName()
     {
-        // DEPRECATED (USED IN VALIDATOR) (USED in CMSFormWidget)
-        $this->getLabel();
+        if($this->getLabel())
+        {
+            return $this->getLabel();
+        }
+        else
+        {
+            return $this->getName();
+        }
     }
 
     public function getLabelTag()
@@ -197,13 +212,43 @@ class CMSFormInput
         return '<label for="' . $this->id . $this->name . '">' . $this->getLabel() . '</label>';
     }
 
-      if(isset($this->settings['default_value']) && !$this->getForm()->isPosted()) 
-      {
-        if ($this->isEmpty())
-        {
-          $this->setValues($this->settings['default_value']);
+    public function getTips()
+    {
+        if (isset($this->settings['tips'])) {
+            return $this->settings['tips'];
         }
-      }
+        // Try to get it from language file
+        // if (cms_utils::get_module($this->module_name))
+        //   {
+        //     // TODO: This should be shown only it the lang key exists...
+        //     return cms_utils::get_module($this->module_name)->lang('tips_'.$this->name);
+        //   }
+        return null;
+    }
+
+
+    // ##### VALUES #####
+
+    // SAVE
+
+    public function save()
+    {
+        if ($this->isValid() == true) {
+            if (isset($this->settings['object'])) {
+                $this->saveObject();
+            }
+            if (isset($this->settings['preference'])) {
+                $this->savePreference();
+            }
+            if (isset($this->settings['user_preference'])) {
+                $this->saveUserPreference();
+            }
+            if (isset($this->settings['default_value']) && !$this->getForm()->isSent()) {
+                if ($this->isEmpty()) {
+                    $this->setValues($this->settings['default_value']);
+                }
+            }
+        }
     }
 
     protected function saveObject()
@@ -267,7 +312,7 @@ class CMSFormInput
             $this->setValues($value);
         }
 
-        if (isset($this->settings['default_value']) && !$this->getForm()->isPosted()) {
+        if (isset($this->settings['default_value']) && !$this->getForm()->isSent()) {
             if ($this->isEmpty()) {
                 $this->setValues($this->settings['default_value']);
             }
@@ -289,7 +334,7 @@ class CMSFormInput
                     try {
                         return $this->settings['object']->$name;
                     } catch (Exception $e) {
-                        audit('', 'CMSForms', 'Unable to retrieve value for field ' . $name . ' with message ' .  $e->getMessage());
+                        audit('', 'CMSForms', 'Unable to retrieve value for field ' . $name . ' with message ' . $e->getMessage());
                     }
                 }
             }
@@ -305,17 +350,15 @@ class CMSFormInput
         }
         return null;
     }
-    
-    public function getValue()  {       
-      if (count($this->values) == 1)
-      {
-        reset($this->values);
-        return (string) current($this->values);
-      }
-      else
-      {
-        return (string) implode('|||',$this->values);
-      }    
+
+    public function getValue()
+    {
+        if (count($this->values) == 1) {
+            reset($this->values);
+            return (string)current($this->values);
+        } else {
+            return (string)implode('|||', $this->values);
+        }
     }
 
     public function setValue($value, $key = 0)
@@ -377,13 +420,19 @@ class CMSFormInput
             // CHANGE THAT
 
             foreach ($this->settings['validators'] as $validator => $value) {
-                $validate = new CMSFormValidator($this, $validator, $value);
+                if (is_object($value)) {
+                    $validate = $value;
+                    $validate->setWidget($this);
+                } else {
+                    // DEPRECATED
+                    $validate = new CMSFormValidator($this, $validator, $value);
+                }
+
                 try {
                     if ($validate->check() === false) $this->is_valid = false;
                 } catch (Exception $e) {
                     $this->setError($e->getMessage(), 'form error');
                 }
-
             }
         }
     }

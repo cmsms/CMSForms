@@ -62,6 +62,14 @@ $lang = array(
 {/if}
   </pre></code>
 
+  <h3>Changelog</h3>
+<pre>
+1.10.16
+-------
+- Errors messages can be translated using I18n
+- Validators are now in separate classes
+- Validators can now directly passed from the widget constructor (ex: \'validators\' => array(\'my_validator\' => new CMSFValidatorNotEmpty(array(\'foo\' => \'bar\')))
+</pre>
 	<h3>Credits</h3>
 	<p>Jean-Christophe Cuvelier - totophe@totophe.com</p>	
 	',

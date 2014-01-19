@@ -1,191 +1,73 @@
 <?php
 
-  /*
-    This class aim to handle CMS Forms very differently.
-    
-    Author: Jean-Christophe Cuvelier <cybertotophe@gmail.com>
-    Copyrights: Jean-Christophe Cuvelier 2012
-    Licence: GPL    
-  
-  */
-  
+/*
+  This class aim to handle CMS Forms very differently.
+
+  Author: Jean-Christophe Cuvelier <cybertotophe@gmail.com>
+  Copyrights: Jean-Christophe Cuvelier 2012
+  Licence: GPL
+
+*/
+
+/**
+ * Class CMSFormValidator
+ * @deprecated use CMSFValidator sub-classes
+ */
+
 class CMSFormValidator
 {
-  protected $widget;
-  protected $validator;
-  protected $params;
-  
-  public function __construct(&$widget,$validator,$params)
-  {
-    $this->widget = $widget;
-    $this->validator = $validator;
-    $this->params = $params;
-    
-    return $this;
-  }
-  
-  public function check()
-  {
-    switch($this->validator)
+
+    private $validator;
+
+    public function __construct(&$widget, $validator_name, $params)
     {
-      case 'not_empty':
-        return $this->CheckNotEmpty();
-      case 'equal_field':
-        return $this->CheckEqualField();
-      case 'email':
-        return $this->CheckEmail();
-      case 'unique':
-        return $this->CheckUnique();
-      default:
-        throw new Exception('Unknown form validator "'.$this->validator .'".');
+        $this->validator = $this->buildValidator($validator_name, $widget, $params);
+
+        return $this;
     }
-    return true;
-  }
-  
-  protected function getErrorMessage($message, $value)
-  {
-    if(is_array($this->params) && isset($this->params['error_message']) && $this->params['error_message'] != '')
+
+    private function buildValidator($validator_name, &$widget, $params)
     {
-      return $this->params['error_message'];
+        switch($validator_name)
+        {
+            case 'not_empty':
+                $validator = new CMSFValidatorNotEmpty($params);
+                break;
+            case 'equal_field':
+                $validator = new CMSFValidatorEqualField($params);
+                break;
+            case 'email':
+                $validator = new CMSFValidatorEmail($params);
+                break;
+            case 'unique':
+                $validator = new CMSFValidatorUnique($params);
+                break;
+            default;
+                $validator = new CMSFValidator($params);
+                break;
+        }
+
+        $validator->setWidget($widget);
+        return $validator;
     }
-    else
+
+    private function getValidator()
     {
-      $error = cms_utils::get_module('CMSForms')->lang($message, $value);
-      return $error;
+        return $this->validator;
     }
-  }
-  
-  protected function CheckUnique()
-  {
-    $value = $this->widget->getValue();
-    if (call_user_func($this->params, $value) !== null)
+
+    public function check()
     {
-      throw new Exception($this->getErrorMessage('field not unique', $value));
+        return $this->getValidator()->check();
     }
-    return true;
-  }
-  
-  protected function CheckNotEmpty()
-  {
-    $values = $this->widget->getValues();
-    $value = $this->widget->getValue();
-    if (is_array($values) && count($values) == 0)
+
+    /**
+     * @param $email
+     * @return bool
+     * @deprecated use CMSFValidatorEmail::validEmail
+     */
+    public static function validEmail($email)
     {
-      throw new Exception($this->getErrorMessage('field_cannot_be_empty', $this->widget->getFriendlyName()));
+        return CMSFValidatorEmail::validEmail($email);
     }
-    elseif(empty($values))
-    {
-      throw new Exception($this->getErrorMessage('field_cannot_be_empty', $this->widget->getFriendlyName()));
-    }
-    elseif(empty($value))
-    {
-      throw new Exception($this->getErrorMessage('field_cannot_be_empty', $this->widget->getFriendlyName()));
-    }
-    return true;
-  }
-  
-  protected function CheckEqualField()
-  {
-      $value1 = serialize($this->widget->getValues());
-      
-      try
-      {
-        $value2 = serialize($this->widget->getForm()->getWidget($this->params)->getValues());
-      }
-      catch(Exception $e)
-      {
-        throw new Exception($this->getErrorMessage('unknown field', $this->params));
-        return false;
-      }
-      
-      if ($value1 != $value2)
-      {
-        throw new Exception($this->getErrorMessage('fields not equal', $this->widget->getFriendlyName(), $this->widget->getForm()->getWidget($this->params)->getFriendlyName()));
-      }
-      
-      return true;
-    
-  }
-  
-  protected function CheckEmail()
-  {
-    $email = implode('|', $this->widget->getValues());
-    if (!self::validEmail($email))
-    {
-      throw new Exception($this->getErrorMessage('invalid email', $email));
-    }
-    return true;
-  }
-  // External functions
-  /**
-  Validate an email address.
-  Provide email address (raw input)
-  Returns true if the email address has the email 
-  address format and the domain exists.
-  */
-  public static function validEmail($email)
-  {
-     $isValid = true;
-     $atIndex = strrpos($email, "@");
-     if (is_bool($atIndex) && !$atIndex)
-     {
-        $isValid = false;
-     }
-     else
-     {
-        $domain = substr($email, $atIndex+1);
-        $local = substr($email, 0, $atIndex);
-        $localLen = strlen($local);
-        $domainLen = strlen($domain);
-        if ($localLen < 1 || $localLen > 64)
-        {
-           // local part length exceeded
-           $isValid = false;
-        }
-        else if ($domainLen < 1 || $domainLen > 255)
-        {
-           // domain part length exceeded
-           $isValid = false;
-        }
-        else if ($local[0] == '.' || $local[$localLen-1] == '.')
-        {
-           // local part starts or ends with '.'
-           $isValid = false;
-        }
-        else if (preg_match('/\\.\\./', $local))
-        {
-           // local part has two consecutive dots
-           $isValid = false;
-        }
-        else if (!preg_match('/^[A-Za-z0-9\\-\\.]+$/', $domain))
-        {
-           // character not valid in domain part
-           $isValid = false;
-        }
-        else if (preg_match('/\\.\\./', $domain))
-        {
-           // domain part has two consecutive dots
-           $isValid = false;
-        }
-        else if
-  (!preg_match('/^(\\\\.|[A-Za-z0-9!#%&`_=\\/$\'*+?^{}|~.-])+$/',
-                   str_replace("\\\\","",$local)))
-        {
-           // character not valid in local part unless 
-           // local part is quoted
-           if (!preg_match('/^"(\\\\"|[^"])+"$/',
-               str_replace("\\\\","",$local)))
-           {
-              $isValid = false;
-           }
-        }
-        if ($isValid && !(checkdnsrr($domain,"MX") || 
-   checkdnsrr($domain,"A")))
-        {
-           // domain not found in DNS
-           $isValid = false;
-        }
-     }
-     return $isValid;
-  }
 }
