@@ -94,7 +94,7 @@ class CMSFormWidget //extends CmsObject
         }
     }
 
-    protected function getWidget()
+    public function getWidget()
     {
         if (is_object($this->widget)) {
             return $this->widget;
