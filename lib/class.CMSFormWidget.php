@@ -248,6 +248,16 @@ class CMSFormWidget //extends CmsObject
         return $this->getWidget()->show($template, $force);
     }
 
+    public function isShowned()
+    {
+        return $this->widget->isShowned();
+    }
+
+    public function showned()
+    {
+        $this->getWidget()->showned();
+    }
+
     public function __toString()
     {
         return $this->getWidget()->__toString();
@@ -629,6 +639,10 @@ class CMSFormWidget //extends CmsObject
     }
 
     // ERRORS
+    public function getShowPriority()
+    {
+        return $this->getWidget()->getShowPriority();
+    }
 
     public function hasErrors()
     {

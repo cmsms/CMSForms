@@ -5,7 +5,7 @@
 */
 
 /**
- * @property mixed show_priority
+ * @property bool show_priority
  */
 class CMSFormInput
 {
@@ -135,7 +135,7 @@ class CMSFormInput
     {
         // TODO: REFACTORING
 
-        if ((!$this->showned || $force)) {
+        if ((!$this->isShowned() || $force)) {
             $html = '';
 
             // if (!is_null($template) && ($this->type != 'hidden')) // FIXME
@@ -158,10 +158,20 @@ class CMSFormInput
                 $html = '<div class="' . $this->getSetting('class', 'field_' . $this->name) . '">' . $html . '</div>';
             }
 
-            $this->showned = true;
+            $this->showned();
             return $html;
         }
         return null;
+    }
+
+    public function showned()
+    {
+        $this->showned = true;
+    }
+
+    public function isShowned()
+    {
+        return (bool) $this->showned;
     }
 
     // ##### COSMETICS #####
@@ -461,6 +471,11 @@ class CMSFormInput
     }
 
     // ERRORS
+
+    public function getShowPriority()
+    {
+        return (bool) $this->show_priority;
+    }
 
     public function hasErrors()
     {

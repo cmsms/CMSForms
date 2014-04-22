@@ -32,6 +32,8 @@ class CMSForm //extends  CmsObject
         'previous' => 'Previous'
     );
 
+    protected $class;
+
     protected $active_buttons = array('submit', 'cancel');
     protected $form_errors = array();
     protected $show_priority = false;
@@ -126,6 +128,16 @@ class CMSForm //extends  CmsObject
         return $state;
     }
 
+    public function setClass($class)
+    {
+        $this->class = $class;
+    }
+
+    public function getClass()
+    {
+        return $this->class;
+    }
+
     public function render_()
     {
         // TODO: LOAD TEMPLATE FROM FILE...
@@ -141,26 +153,21 @@ class CMSForm //extends  CmsObject
         return $_contents;
     }
 
+    /**
+     * @deprecated use CMSFormPlugins::Form
+     */
     public function render()
     {
-        // $file = dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'admin.form.tpl';
-        $file = dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'admin.form.tpl';
-        // $file2 = 'admin.form.tpl';
-        // We load the template here because of Smarty restrictions
-        // $template = file_get_contents($file);
-
         $cms_smarty = cmsms()->GetSmarty();
 
         $smarty = new Smarty();
         $smarty->compile_dir = $cms_smarty->compile_dir;
         $smarty->assign('form', $this);
 
+//        CMSFormPlugins::RegisterPlugins($smarty);
+
+        $file = dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'admin.form.tpl';
         return $smarty->fetch('file:' . $file);
-
-        // return $smarty->display('string:'.$template);
-        // return $smarty->display('module_file_tpl:CMSForms;'.$file2);
-        // return $smarty->display($file);
-
     }
 
     public function setTemplate($template_name, $template)
@@ -266,6 +273,11 @@ class CMSForm //extends  CmsObject
         return $this->widgets;
     }
 
+    public function getAllWidgets()
+    {
+        return $this->widgets + $this->hidden_widgets;
+    }
+
     /**
      * @param string $name The widget name
      *
@@ -357,6 +369,11 @@ class CMSForm //extends  CmsObject
     public function isValid()
     {
         return $this->noError();
+    }
+
+    public function getShowPriority()
+    {
+        return (bool) $this->show_priority;
     }
 
     public function getErrors()
@@ -487,7 +504,7 @@ class CMSForm //extends  CmsObject
 
     public function getFieldsets()
     {
-        // return $this->fieldsets;
+         return $this->fieldsets;
     }
 
     public function renderFieldsets($widget_template = null, $legend = true)
