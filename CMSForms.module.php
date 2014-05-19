@@ -11,7 +11,7 @@ require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARAT
 class CMSForms extends CMSModule
 {
 	public function GetName()               { return 'CMSForms';	               }
-	public function GetVersion()            { return '1.10.99';                    }
+	public function GetVersion()            { return '1.11.0';                    }
 	public function GetAuthor()             { return 'Jean-Christophe Cuvelier'; }
 	public function GetAuthorEmail()        { return 'jcc@atomseeds.com';   }
 	
